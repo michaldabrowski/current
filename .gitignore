@@ -19,6 +19,7 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+build
 
 # Frontend (Node.js)
 frontend/node_modules/
@@ -83,3 +84,6 @@ backend/*.log
 # Application specific
 current.mv.db
 current.trace.db
+
+.gradle
+.kotlin
