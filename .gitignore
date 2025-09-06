@@ -1,0 +1,85 @@
+
+### **2. .gitignore (Root Directory)**
+
+**Please create `current/.gitignore`:**
+
+```gitignore
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Frontend (Node.js)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/coverage/
+frontend/.nyc_output/
+
+# Frontend build artifacts
+frontend/.vite/
+frontend/vite.config.js.timestamp-*
+frontend/vite.config.ts.timestamp-*
+
+# Backend (Gradle/Kotlin)
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+backend/.settings/
+backend/.project
+backend/.classpath
+backend/gradle-app.setting
+
+# Backend IDE
+backend/.idea/
+backend/*.iws
+backend/*.iml
+backend/*.ipr
+
+# Backend logs
+backend/logs/
+backend/*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.staging
+
+# Security
+*.key
+*.pem
+*.crt
+*.p12
+*.jks
+
+# Application specific
+current.mv.db
+current.trace.db
