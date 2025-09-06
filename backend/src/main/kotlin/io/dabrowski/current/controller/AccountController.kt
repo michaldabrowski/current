@@ -86,9 +86,9 @@ class AccountController(
 }
 
 data class CreateAccountRequest(
-    @field:NotBlank(message = "Account name cannot be blank")
+    @NotBlank(message = "Account name cannot be blank")
     val name: String,
-    @field:PositiveOrZero(message = "Initial balance must be zero or positive")
+    @PositiveOrZero(message = "Initial balance must be zero or positive")
     val initialBalance: BigDecimal? = null
 )
 

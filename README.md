@@ -4,17 +4,13 @@ A financial portfolio application playground.
 
 ![Current Logo](frontend/src/assets/logo.svg)
 
-### Frontend Setup
+### Setup
 
 ```bash
-cd frontend
-npm install
-npm run dev
-```
+./gradlew buildAll # to build all
+./gradlew testAll # to test all
 
-### Backend Setup
-
-```bash
-cd backend
-./gradlew bootRun
+# local development
+./gradlew runFrontend # terminal tab 1 for frontend
+./gradlew runBackend # terminal tab 2 for backend
 ```

@@ -1,23 +1,22 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "3.2.1"
-    id("io.spring.dependency-management") version "1.1.4"
-    kotlin("jvm") version "1.9.21"
-    kotlin("plugin.spring") version "1.9.21"
-    kotlin("plugin.jpa") version "1.9.21"
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    kotlin("plugin.jpa")
 }
-
-group = "io.dabrowski"
-
-version = "0.1.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-repositories { mavenCentral() }
+repositories {
+    mavenCentral()
+}
 
 dependencies {
     // Spring Boot Starters
@@ -45,10 +44,32 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs += "-Xjsr305=strict"
-        jvmTarget = "21"
+    compilerOptions {
+        freeCompilerArgs.addAll(
+            "-Xjsr305=strict",
+            "-Xcontext-parameters",
+            "-Xannotation-default-target=param-property"
+        )
+        jvmTarget.set(JVM_21)
     }
 }
 
-tasks.withType<Test> { useJUnitPlatform() }
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+// Configure backend to serve frontend static files
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    dependsOn(":frontend:buildFrontend")
+    from("${project(":frontend").layout.buildDirectory.dir("dist").get()}") {
+        into("static")
+    }
+}
+
+// Development task that doesn't include frontend files
+tasks.register<org.springframework.boot.gradle.tasks.run.BootRun>("bootRunDev") {
+    group = "application"
+    description = "Run the application for development (without frontend static files)"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "io.dabrowski.current.CurrentApplicationKt"
+}
