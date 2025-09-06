@@ -36,8 +36,8 @@ jobs:
 
     - name: Check code formatting
       run: |
-        # Backend: Check Kotlin formatting (if using ktlint)
-        echo "Checking backend code formatting..."
+        # Backend: Check Kotlin formatting (using ktlint)
+        ./gradlew :backend:ktlintCheck
         
         # Frontend: Check code formatting
         ./gradlew :frontend:lintCheck
@@ -52,7 +52,6 @@ jobs:
 
     - name: Comment PR
       uses: actions/github-script@v7
-      if: success()
       with:
         script: |
           github.rest.issues.createComment({
