@@ -5,7 +5,7 @@ import { RouterLink, RouterView } from "vue-router";
 <template>
   <div id="app" class="min-h-screen bg-gray-50">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
+    <nav class="bg-white shadow-xs border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <!-- Logo/Brand -->
@@ -18,8 +18,8 @@ import { RouterLink, RouterView } from "vue-router";
           <div class="flex space-x-8">
             <RouterLink
               to="/"
-              class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-              active-class="text-primary-600 bg-primary-50"
+              class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 router-link-inactive"
+              active-class="router-link-active"
             >
               Dashboard
             </RouterLink>
@@ -41,9 +41,3 @@ import { RouterLink, RouterView } from "vue-router";
     </footer>
   </div>
 </template>
-
-<style scoped>
-.router-link-active {
-  @apply text-primary-600 bg-primary-50;
-}
-</style>

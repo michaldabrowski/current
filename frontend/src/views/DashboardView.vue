@@ -153,7 +153,7 @@
     <!-- Create Account Modal -->
     <div
       v-if="showCreateAccount"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click="showCreateAccount = false"
     >
       <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" @click.stop>
@@ -178,7 +178,7 @@
     <!-- Add Transaction Modal -->
     <div
       v-if="showAddTransaction"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click="showAddTransaction = false"
     >
       <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" @click.stop>
