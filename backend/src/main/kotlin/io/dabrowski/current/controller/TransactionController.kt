@@ -6,13 +6,7 @@ import io.dabrowski.current.entity.TransactionType
 import io.dabrowski.current.repository.AccountRepository
 import io.dabrowski.current.repository.TransactionRepository
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
 @RestController
@@ -73,13 +67,22 @@ class TransactionController(
 
         return transactions
             .groupBy { it.symbol }
-            .map { (symbol, txns) ->
+            .mapNotNull { (symbol, txns) ->
+                // Calculate current quantity (buys - sells)
                 val totalQuantity = txns.sumOf {
                     if (it.type == TransactionType.BUY) it.quantity else -it.quantity
                 }
-                val averagePrice = if (totalQuantity > BigDecimal.ZERO) {
-                    txns.filter { it.type == TransactionType.BUY }
-                        .sumOf { it.totalAmount } / totalQuantity
+
+                // Only process if we still hold this asset
+                if (totalQuantity <= BigDecimal.ZERO) return@mapNotNull null
+
+                // Calculate weighted average price of all purchases
+                val buyTransactions = txns.filter { it.type == TransactionType.BUY }
+                val totalPurchaseAmount = buyTransactions.sumOf { it.totalAmount }
+                val totalPurchaseQuantity = buyTransactions.sumOf { it.quantity }
+
+                val averagePrice = if (totalPurchaseQuantity > BigDecimal.ZERO) {
+                    totalPurchaseAmount / totalPurchaseQuantity
                 } else BigDecimal.ZERO
 
                 HoldingResponse(
@@ -89,7 +92,6 @@ class TransactionController(
                     assetType = txns.first().assetType
                 )
             }
-            .filter { it.quantity > BigDecimal.ZERO }
     }
 }
 

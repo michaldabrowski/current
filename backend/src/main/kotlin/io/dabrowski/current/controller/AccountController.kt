@@ -2,7 +2,9 @@ package io.dabrowski.current.controller
 
 import io.dabrowski.current.entity.Account
 import io.dabrowski.current.repository.AccountRepository
-import org.springframework.http.HttpStatus
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.PositiveOrZero
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -47,7 +49,7 @@ class AccountController(
     }
 
     @PostMapping
-    fun createAccount(@RequestBody request: CreateAccountRequest): Account {
+    fun createAccount(@Valid @RequestBody request: CreateAccountRequest): Account {
         val account = Account(
             name = request.name,
             cashBalance = request.initialBalance ?: BigDecimal.ZERO
@@ -84,7 +86,9 @@ class AccountController(
 }
 
 data class CreateAccountRequest(
+    @field:NotBlank(message = "Account name cannot be blank")
     val name: String,
+    @field:PositiveOrZero(message = "Initial balance must be zero or positive")
     val initialBalance: BigDecimal? = null
 )
 

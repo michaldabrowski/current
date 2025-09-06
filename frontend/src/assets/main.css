@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles for the financial portfolio app */
+/* Custom styles for the current app */
 @layer base {
   html {
     font-family: "Inter", system-ui, sans-serif;
