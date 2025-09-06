@@ -55,15 +55,12 @@ export const useCurrentStore = defineStore("current", () => {
     try {
       loading.value = true;
       error.value = null;
-      console.log("Fetching accounts..."); // DEBUG
 
       const response = await accountsApi.getAll();
       accounts.value = response.data;
-      console.log("Fetched accounts:", accounts.value); // DEBUG
 
       // Set first account as current if none selected
       if (accounts.value.length > 0 && !currentAccount.value) {
-        console.log("Auto-selecting first account"); // DEBUG
         await selectAccount(accounts.value[0].id);
       }
     } catch (err) {
@@ -79,30 +76,20 @@ export const useCurrentStore = defineStore("current", () => {
       loading.value = true;
       error.value = null;
 
-      console.log("Selecting account with ID:", accountId); // DEBUG
-
       const [accountRes, transactionsRes, holdingsRes] = await Promise.all([
         accountsApi.getById(accountId),
         transactionsApi.getByAccount(accountId),
         transactionsApi.getHoldings(accountId),
       ]);
 
-      console.log("Account API response:", accountRes.data); // DEBUG
-      console.log("Transactions API response:", transactionsRes.data); // DEBUG
-      console.log("Holdings API response:", holdingsRes.data); // DEBUG
-
       currentAccount.value = accountRes.data;
       transactions.value = transactionsRes.data;
       holdings.value = holdingsRes.data;
-
-      console.log("Current account set to:", currentAccount.value); // DEBUG
-      console.log("Is currentAccount truthy?", !!currentAccount.value); // DEBUG
     } catch (err) {
       error.value = "Failed to fetch account data";
       console.error("Error fetching account data:", err);
     } finally {
       loading.value = false;
-      console.log("Loading set to false, currentAccount is:", currentAccount.value); // DEBUG
     }
   };
 
@@ -111,19 +98,12 @@ export const useCurrentStore = defineStore("current", () => {
       loading.value = true;
       error.value = null;
 
-      console.log("Creating account:", { name, initialBalance }); // DEBUG
-
       const response = await accountsApi.create({ name, initialBalance });
-      console.log("Account created:", response.data); // DEBUG
 
       accounts.value.push(response.data);
-      console.log("Accounts after push:", accounts.value); // DEBUG
-
       // Select the new account
-      console.log("Selecting new account with ID:", response.data.id); // DEBUG
       await selectAccount(response.data.id);
 
-      console.log("Current account after selection:", currentAccount.value); // DEBUG
     } catch (err) {
       error.value = "Failed to create account";
       console.error("Error creating account:", err);

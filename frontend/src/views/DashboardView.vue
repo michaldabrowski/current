@@ -235,7 +235,7 @@ import { storeToRefs } from 'pinia'
 
 const store = useCurrentStore()
 
-// Get reactive references from store (this is the key fix!)
+// Use storeToRefs to ensure reactivity in the template
 const {
   accounts,
   currentAccount,
