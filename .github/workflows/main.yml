@@ -40,7 +40,7 @@ jobs:
         ./gradlew :backend:ktlintCheck
         
         # Frontend: Check code formatting
-        ./gradlew :frontend:lintCheck
+        ./gradlew :frontend:lint
 
     - name: Run quick tests
       run: |
