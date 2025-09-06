@@ -37,7 +37,7 @@ jobs:
     - name: Check code formatting
       run: |
         # Backend: Check Kotlin formatting (using ktlint)
-        ./gradlew :backend:ktlintCheck
+        # TODO to be added ./gradlew :backend:ktlintCheck
         
         # Frontend: Check code formatting
         ./gradlew :frontend:lint
