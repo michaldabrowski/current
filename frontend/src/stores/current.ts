@@ -61,7 +61,10 @@ export const useCurrentStore = defineStore("current", () => {
 
       // Set first account as current if none selected
       if (accounts.value.length > 0 && !currentAccount.value) {
-        await selectAccount(accounts.value[0].id);
+        const firstAccount = accounts.value[0];
+        if (firstAccount) {
+          await selectAccount(firstAccount.id);
+        }
       }
     } catch (err) {
       error.value = "Failed to fetch accounts";
