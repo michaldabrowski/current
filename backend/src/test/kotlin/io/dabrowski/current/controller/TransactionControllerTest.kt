@@ -17,7 +17,6 @@ import java.math.BigDecimal
 
 @ExtendWith(MockitoExtension::class)
 class TransactionControllerTest {
-
     @Mock
     private lateinit var transactionRepository: TransactionRepository
 
@@ -33,28 +32,29 @@ class TransactionControllerTest {
         val accountId = 1L
         val account = Account(id = accountId, name = "Test Account")
 
-        val transactions = listOf(
-            Transaction(
-                id = 1L,
-                account = account,
-                symbol = "AAPL",
-                type = TransactionType.BUY,
-                assetType = AssetType.STOCK,
-                quantity = BigDecimal("10"),
-                price = BigDecimal("100.00"),
-                totalAmount = BigDecimal("1000.00")
-            ),
-            Transaction(
-                id = 2L,
-                account = account,
-                symbol = "AAPL",
-                type = TransactionType.BUY,
-                assetType = AssetType.STOCK,
-                quantity = BigDecimal("10"),
-                price = BigDecimal("200.00"),
-                totalAmount = BigDecimal("2000.00")
+        val transactions =
+            listOf(
+                Transaction(
+                    id = 1L,
+                    account = account,
+                    symbol = "AAPL",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("10"),
+                    price = BigDecimal("100.00"),
+                    totalAmount = BigDecimal("1000.00"),
+                ),
+                Transaction(
+                    id = 2L,
+                    account = account,
+                    symbol = "AAPL",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("10"),
+                    price = BigDecimal("200.00"),
+                    totalAmount = BigDecimal("2000.00"),
+                ),
             )
-        )
 
         `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
 
@@ -76,28 +76,29 @@ class TransactionControllerTest {
         val accountId = 1L
         val account = Account(id = accountId, name = "Test Account")
 
-        val transactions = listOf(
-            Transaction(
-                id = 1L,
-                account = account,
-                symbol = "AAPL",
-                type = TransactionType.BUY,
-                assetType = AssetType.STOCK,
-                quantity = BigDecimal("20"),
-                price = BigDecimal("100.00"),
-                totalAmount = BigDecimal("2000.00")
-            ),
-            Transaction(
-                id = 2L,
-                account = account,
-                symbol = "AAPL",
-                type = TransactionType.SELL,
-                assetType = AssetType.STOCK,
-                quantity = BigDecimal("5"),
-                price = BigDecimal("120.00"),
-                totalAmount = BigDecimal("600.00")
+        val transactions =
+            listOf(
+                Transaction(
+                    id = 1L,
+                    account = account,
+                    symbol = "AAPL",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("20"),
+                    price = BigDecimal("100.00"),
+                    totalAmount = BigDecimal("2000.00"),
+                ),
+                Transaction(
+                    id = 2L,
+                    account = account,
+                    symbol = "AAPL",
+                    type = TransactionType.SELL,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("5"),
+                    price = BigDecimal("120.00"),
+                    totalAmount = BigDecimal("600.00"),
+                ),
             )
-        )
 
         `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
 
@@ -119,28 +120,29 @@ class TransactionControllerTest {
         val accountId = 1L
         val account = Account(id = accountId, name = "Test Account")
 
-        val transactions = listOf(
-            Transaction(
-                id = 1L,
-                account = account,
-                symbol = "AAPL",
-                type = TransactionType.BUY,
-                assetType = AssetType.STOCK,
-                quantity = BigDecimal("10"),
-                price = BigDecimal("100.00"),
-                totalAmount = BigDecimal("1000.00")
-            ),
-            Transaction(
-                id = 2L,
-                account = account,
-                symbol = "AAPL",
-                type = TransactionType.SELL,
-                assetType = AssetType.STOCK,
-                quantity = BigDecimal("10"),
-                price = BigDecimal("120.00"),
-                totalAmount = BigDecimal("1200.00")
+        val transactions =
+            listOf(
+                Transaction(
+                    id = 1L,
+                    account = account,
+                    symbol = "AAPL",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("10"),
+                    price = BigDecimal("100.00"),
+                    totalAmount = BigDecimal("1000.00"),
+                ),
+                Transaction(
+                    id = 2L,
+                    account = account,
+                    symbol = "AAPL",
+                    type = TransactionType.SELL,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("10"),
+                    price = BigDecimal("120.00"),
+                    totalAmount = BigDecimal("1200.00"),
+                ),
             )
-        )
 
         `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
 
@@ -157,28 +159,29 @@ class TransactionControllerTest {
         val accountId = 1L
         val account = Account(id = accountId, name = "Test Account")
 
-        val transactions = listOf(
-            Transaction(
-                id = 1L,
-                account = account,
-                symbol = "AAPL",
-                type = TransactionType.BUY,
-                assetType = AssetType.STOCK,
-                quantity = BigDecimal("10"),
-                price = BigDecimal("150.00"),
-                totalAmount = BigDecimal("1500.00")
-            ),
-            Transaction(
-                id = 2L,
-                account = account,
-                symbol = "BTC",
-                type = TransactionType.BUY,
-                assetType = AssetType.CRYPTO,
-                quantity = BigDecimal("0.5"),
-                price = BigDecimal("50000.00"),
-                totalAmount = BigDecimal("25000.00")
+        val transactions =
+            listOf(
+                Transaction(
+                    id = 1L,
+                    account = account,
+                    symbol = "AAPL",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("10"),
+                    price = BigDecimal("150.00"),
+                    totalAmount = BigDecimal("1500.00"),
+                ),
+                Transaction(
+                    id = 2L,
+                    account = account,
+                    symbol = "BTC",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.CRYPTO,
+                    quantity = BigDecimal("0.5"),
+                    price = BigDecimal("50000.00"),
+                    totalAmount = BigDecimal("25000.00"),
+                ),
             )
-        )
 
         `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
 
