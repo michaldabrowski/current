@@ -20,16 +20,15 @@ import java.time.LocalDateTime
 @RestController
 @RequestMapping("/api/accounts")
 class AccountController(
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
 ) {
-
     @GetMapping
-    fun getAllAccounts(): List<Account> {
-        return accountRepository.findAll()
-    }
+    fun getAllAccounts(): List<Account> = accountRepository.findAll()
 
     @GetMapping("/{id}")
-    fun getAccount(@PathVariable id: Long): ResponseEntity<Account> {
+    fun getAccount(
+        @PathVariable id: Long,
+    ): ResponseEntity<Account> {
         val account = accountRepository.findById(id).orElse(null)
         return if (account != null) {
             ResponseEntity.ok(account)
@@ -39,7 +38,9 @@ class AccountController(
     }
 
     @GetMapping("/{id}/with-transactions")
-    fun getAccountWithTransactions(@PathVariable id: Long): ResponseEntity<Account> {
+    fun getAccountWithTransactions(
+        @PathVariable id: Long,
+    ): ResponseEntity<Account> {
         val account = accountRepository.findByIdWithTransactions(id)
         return if (account != null) {
             ResponseEntity.ok(account)
@@ -49,25 +50,29 @@ class AccountController(
     }
 
     @PostMapping
-    fun createAccount(@Valid @RequestBody request: CreateAccountRequest): Account {
-        val account = Account(
-            name = request.name,
-            cashBalance = request.initialBalance ?: BigDecimal.ZERO
-        )
+    fun createAccount(
+        @Valid @RequestBody request: CreateAccountRequest,
+    ): Account {
+        val account =
+            Account(
+                name = request.name,
+                cashBalance = request.initialBalance ?: BigDecimal.ZERO,
+            )
         return accountRepository.save(account)
     }
 
     @PutMapping("/{id}/cash")
     fun updateCashBalance(
         @PathVariable id: Long,
-        @RequestBody request: UpdateCashRequest
+        @RequestBody request: UpdateCashRequest,
     ): ResponseEntity<Account> {
         val account = accountRepository.findById(id).orElse(null)
         return if (account != null) {
-            val updatedAccount = account.copy(
-                cashBalance = request.newBalance,
-                updatedAt = LocalDateTime.now()
-            )
+            val updatedAccount =
+                account.copy(
+                    cashBalance = request.newBalance,
+                    updatedAt = LocalDateTime.now(),
+                )
             ResponseEntity.ok(accountRepository.save(updatedAccount))
         } else {
             ResponseEntity.notFound().build()
@@ -75,23 +80,24 @@ class AccountController(
     }
 
     @DeleteMapping("/{id}")
-    fun deleteAccount(@PathVariable id: Long): ResponseEntity<Void> {
-        return if (accountRepository.existsById(id)) {
+    fun deleteAccount(
+        @PathVariable id: Long,
+    ): ResponseEntity<Void> =
+        if (accountRepository.existsById(id)) {
             accountRepository.deleteById(id)
             ResponseEntity.noContent().build()
         } else {
             ResponseEntity.notFound().build()
         }
-    }
 }
 
 data class CreateAccountRequest(
     @NotBlank(message = "Account name cannot be blank")
     val name: String,
     @PositiveOrZero(message = "Initial balance must be zero or positive")
-    val initialBalance: BigDecimal? = null
+    val initialBalance: BigDecimal? = null,
 )
 
 data class UpdateCashRequest(
-    val newBalance: BigDecimal
+    val newBalance: BigDecimal,
 )

@@ -22,7 +22,6 @@ import java.util.Optional
 
 @WebMvcTest(AccountController::class)
 class AccountControllerTest {
-
     @Autowired
     private lateinit var mockMvc: MockMvc
 
@@ -47,7 +46,8 @@ class AccountControllerTest {
         `when`(accountRepository.findAll()).thenReturn(accounts)
 
         // Expect
-        mockMvc.perform(get("/api/accounts"))
+        mockMvc
+            .perform(get("/api/accounts"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray())
             .andExpect(jsonPath("$.length()").value(2))
@@ -63,7 +63,8 @@ class AccountControllerTest {
         `when`(accountRepository.findById(1L)).thenReturn(Optional.of(TEST_ACCOUNT))
 
         // Expect
-        mockMvc.perform(get("/api/accounts/1"))
+        mockMvc
+            .perform(get("/api/accounts/1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.name").value("Test Account"))
@@ -76,7 +77,8 @@ class AccountControllerTest {
         `when`(accountRepository.findById(NON_EXISTENT_ACCOUNT_ID)).thenReturn(Optional.empty())
 
         // Expect
-        mockMvc.perform(get("/api/accounts/$NON_EXISTENT_ACCOUNT_ID"))
+        mockMvc
+            .perform(get("/api/accounts/$NON_EXISTENT_ACCOUNT_ID"))
             .andExpect(status().isNotFound())
     }
 
@@ -89,12 +91,12 @@ class AccountControllerTest {
         val request = CreateAccountRequest(name = "New Account", initialBalance = BigDecimal("5000.00"))
 
         // Expect
-        mockMvc.perform(
-            post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        )
-            .andExpect(status().isOk())
+        mockMvc
+            .perform(
+                post("/api/accounts")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)),
+            ).andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("New Account"))
             .andExpect(jsonPath("$.cashBalance").value(5000.00))
 
@@ -109,34 +111,34 @@ class AccountControllerTest {
         val invalidRequest = CreateAccountRequest(name = "", initialBalance = BigDecimal("-100.00"))
 
         // Expect
-        mockMvc.perform(
-            post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest))
-        )
-            .andExpect(status().isBadRequest())
+        mockMvc
+            .perform(
+                post("/api/accounts")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(invalidRequest)),
+            ).andExpect(status().isBadRequest())
     }
 
     @Test
     fun `should return 400 when creating account with null name`() {
         // Expect
-        mockMvc.perform(
-            post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"initialBalance": 1000.00}""")
-        )
-            .andExpect(status().isBadRequest())
+        mockMvc
+            .perform(
+                post("/api/accounts")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"initialBalance": 1000.00}"""),
+            ).andExpect(status().isBadRequest())
     }
 
     @Test
     fun `should return 400 when creating account with malformed JSON`() {
         // Expect
-        mockMvc.perform(
-            post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("invalid json")
-        )
-            .andExpect(status().isBadRequest())
+        mockMvc
+            .perform(
+                post("/api/accounts")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("invalid json"),
+            ).andExpect(status().isBadRequest())
     }
 
     @Test
@@ -150,12 +152,12 @@ class AccountControllerTest {
         val request = CreateAccountRequest(name = "Rich Account", initialBalance = largeBalance)
 
         // Expect
-        mockMvc.perform(
-            post("/api/accounts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        )
-            .andExpect(status().isOk())
+        mockMvc
+            .perform(
+                post("/api/accounts")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)),
+            ).andExpect(status().isOk())
             .andExpect(jsonPath("$.cashBalance").value(999999999999.99))
     }
 }

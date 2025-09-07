@@ -7,6 +7,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.spring")
     kotlin("plugin.jpa")
+    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
 }
 
 java {
@@ -43,12 +44,19 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
 }
 
+ktlint {
+    version.set("1.7.1")
+    verbose.set(true)
+    android.set(false)
+    outputToConsole.set(true)
+}
+
 tasks.withType<KotlinCompile> {
     compilerOptions {
         freeCompilerArgs.addAll(
             "-Xjsr305=strict",
             "-Xcontext-parameters",
-            "-Xannotation-default-target=param-property"
+            "-Xannotation-default-target=param-property",
         )
         jvmTarget.set(JVM_21)
     }

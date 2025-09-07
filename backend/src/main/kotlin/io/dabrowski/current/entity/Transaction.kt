@@ -21,43 +21,36 @@ data class Transaction(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     val account: Account,
-
     @Column(nullable = false)
     val symbol: String,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     val type: TransactionType,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     val assetType: AssetType,
-
     @Column(nullable = false, precision = 19, scale = 8)
     val quantity: BigDecimal,
-
     @Column(nullable = false, precision = 19, scale = 2)
     val price: BigDecimal,
-
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
     val totalAmount: BigDecimal,
-
     @Column(name = "transaction_date")
     val transactionDate: LocalDateTime = LocalDateTime.now(),
-
     @Column
-    val notes: String? = null
+    val notes: String? = null,
 )
 
 enum class TransactionType {
-    BUY, SELL
+    BUY,
+    SELL,
 }
 
 enum class AssetType {
-    STOCK, CRYPTO
+    STOCK,
+    CRYPTO,
 }

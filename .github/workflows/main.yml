@@ -39,12 +39,12 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x ./gradlew
 
-    - name: Check code formatting
+    - name: Check code
       run: |
-        # Backend: Check Kotlin formatting (using ktlint)
-        # TODO to be added ./gradlew :backend:ktlintCheck
+        # Backend: Check backend code
+        ./gradlew :backend:ktlintCheck
         
-        # Frontend: Check code formatting
+        # Frontend: Check frontend code
         ./gradlew :frontend:lint
 
     - name: Run quick tests

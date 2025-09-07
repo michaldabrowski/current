@@ -20,14 +20,13 @@ class TransactionController(
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
 ) {
-
     @GetMapping
-    fun getAllTransactions(): List<Transaction> {
-        return transactionRepository.findAll()
-    }
+    fun getAllTransactions(): List<Transaction> = transactionRepository.findAll()
 
     @GetMapping("/{id}")
-    fun getTransaction(@PathVariable id: Long): ResponseEntity<Transaction> {
+    fun getTransaction(
+        @PathVariable id: Long,
+    ): ResponseEntity<Transaction> {
         val transaction = transactionRepository.findById(id).orElse(null)
         return if (transaction != null) {
             ResponseEntity.ok(transaction)
@@ -37,46 +36,53 @@ class TransactionController(
     }
 
     @GetMapping("/account/{accountId}")
-    fun getTransactionsByAccount(@PathVariable accountId: Long): List<Transaction> {
-        return transactionRepository.findByAccountIdOrderByDateDesc(accountId)
-    }
+    fun getTransactionsByAccount(
+        @PathVariable accountId: Long,
+    ): List<Transaction> = transactionRepository.findByAccountIdOrderByDateDesc(accountId)
 
     @GetMapping("/symbol/{symbol}")
-    fun getTransactionsBySymbol(@PathVariable symbol: String): List<Transaction> {
-        return transactionRepository.findBySymbol(symbol)
-    }
+    fun getTransactionsBySymbol(
+        @PathVariable symbol: String,
+    ): List<Transaction> = transactionRepository.findBySymbol(symbol)
 
     @PostMapping
-    fun createTransaction(@RequestBody request: CreateTransactionRequest): ResponseEntity<Transaction> {
-        val account = accountRepository.findById(request.accountId).orElse(null)
-            ?: return ResponseEntity.badRequest().build()
+    fun createTransaction(
+        @RequestBody request: CreateTransactionRequest,
+    ): ResponseEntity<Transaction> {
+        val account =
+            accountRepository.findById(request.accountId).orElse(null)
+                ?: return ResponseEntity.badRequest().build()
 
-        val transaction = Transaction(
-            account = account,
-            symbol = request.symbol,
-            type = request.type,
-            assetType = request.assetType,
-            quantity = request.quantity,
-            price = request.price,
-            totalAmount = request.quantity * request.price,
-            notes = request.notes
-        )
+        val transaction =
+            Transaction(
+                account = account,
+                symbol = request.symbol,
+                type = request.type,
+                assetType = request.assetType,
+                quantity = request.quantity,
+                price = request.price,
+                totalAmount = request.quantity * request.price,
+                notes = request.notes,
+            )
 
         val savedTransaction = transactionRepository.save(transaction)
         return ResponseEntity.ok(savedTransaction)
     }
 
     @GetMapping("/holdings/{accountId}")
-    fun getHoldings(@PathVariable accountId: Long): List<HoldingResponse> {
+    fun getHoldings(
+        @PathVariable accountId: Long,
+    ): List<HoldingResponse> {
         val transactions = transactionRepository.findByAccountId(accountId)
 
         return transactions
             .groupBy { it.symbol }
             .mapNotNull { (symbol, txns) ->
                 // Calculate current quantity (buys - sells)
-                val totalQuantity = txns.sumOf {
-                    if (it.type == TransactionType.BUY) it.quantity else -it.quantity
-                }
+                val totalQuantity =
+                    txns.sumOf {
+                        if (it.type == TransactionType.BUY) it.quantity else -it.quantity
+                    }
 
                 // Only process if we still hold this asset
                 if (totalQuantity <= BigDecimal.ZERO) return@mapNotNull null
@@ -86,15 +92,18 @@ class TransactionController(
                 val totalPurchaseAmount = buyTransactions.sumOf { it.totalAmount }
                 val totalPurchaseQuantity = buyTransactions.sumOf { it.quantity }
 
-                val averagePrice = if (totalPurchaseQuantity > BigDecimal.ZERO) {
-                    totalPurchaseAmount / totalPurchaseQuantity
-                } else BigDecimal.ZERO
+                val averagePrice =
+                    if (totalPurchaseQuantity > BigDecimal.ZERO) {
+                        totalPurchaseAmount / totalPurchaseQuantity
+                    } else {
+                        BigDecimal.ZERO
+                    }
 
                 HoldingResponse(
                     symbol = symbol,
                     quantity = totalQuantity,
                     averagePrice = averagePrice,
-                    assetType = txns.first().assetType
+                    assetType = txns.first().assetType,
                 )
             }
     }
@@ -107,12 +116,12 @@ data class CreateTransactionRequest(
     val assetType: AssetType,
     val quantity: BigDecimal,
     val price: BigDecimal,
-    val notes: String? = null
+    val notes: String? = null,
 )
 
 data class HoldingResponse(
     val symbol: String,
     val quantity: BigDecimal,
     val averagePrice: BigDecimal,
-    val assetType: AssetType
+    val assetType: AssetType,
 )

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface AccountRepository : JpaRepository<Account, Long> {
-
     fun findByName(name: String): Account?
 
     @Query("SELECT a FROM Account a LEFT JOIN FETCH a.transactions WHERE a.id = :id")

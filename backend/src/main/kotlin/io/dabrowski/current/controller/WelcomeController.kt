@@ -5,13 +5,11 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class WelcomeController {
-
     @GetMapping("/")
-    fun welcome(): Map<String, String> {
-        return mapOf(
+    fun welcome(): Map<String, String> =
+        mapOf(
             "message" to "Current API is running!",
             "health" to "/actuator/health",
-            "info" to "/actuator/info"
+            "info" to "/actuator/info",
         )
-    }
 }
