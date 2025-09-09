@@ -14,7 +14,8 @@
     <!-- No Account State -->
     <div v-else-if="!currentAccount" class="text-center py-12">
       <h2 class="text-xl font-semibold text-gray-900 mb-4">Welcome to Current!</h2>
-      <p class="text-gray-600 mb-6">Create your first account to start tracking your investments.</p>
+      <p class="text-gray-600 mb-6">Create your first account to start tracking your
+        investments.</p>
       <button @click="showCreateAccount = true" class="btn-primary">Create Account</button>
     </div>
 
@@ -62,7 +63,9 @@
 
         <div class="card">
           <h3 class="text-sm font-medium text-gray-500 mb-2">Cash</h3>
-          <p class="text-2xl font-bold text-gray-900">${{ formatCurrency(currentAccount.cashBalance) }}</p>
+          <p class="text-2xl font-bold text-gray-900">${{
+              formatCurrency(currentAccount.cashBalance)
+            }}</p>
           <p class="text-sm text-gray-500 mt-1">Available balance</p>
         </div>
       </div>
@@ -99,8 +102,11 @@
               class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
               <div class="flex items-center">
-                <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                  <span class="text-primary-600 font-medium text-sm">{{ stock.symbol.slice(0, 2) }}</span>
+                <div
+                  class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                  <span class="text-primary-600 font-medium text-sm">{{
+                      stock.symbol.slice(0, 2)
+                    }}</span>
                 </div>
                 <div>
                   <p class="font-medium text-gray-900">{{ stock.symbol }}</p>
@@ -108,7 +114,8 @@
                 </div>
               </div>
               <div class="text-right">
-                <p class="font-medium text-gray-900">${{ formatCurrency(stock.quantity * stock.averagePrice) }}</p>
+                <p class="font-medium text-gray-900">
+                  ${{ formatCurrency(stock.quantity * stock.averagePrice) }}</p>
                 <p class="text-sm text-gray-500">Avg: ${{ formatCurrency(stock.averagePrice) }}</p>
               </div>
             </div>
@@ -132,8 +139,11 @@
               class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
               <div class="flex items-center">
-                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                  <span class="text-yellow-600 font-medium text-sm">{{ crypto.symbol.slice(0, 2) }}</span>
+                <div
+                  class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                  <span class="text-yellow-600 font-medium text-sm">{{
+                      crypto.symbol.slice(0, 2)
+                    }}</span>
                 </div>
                 <div>
                   <p class="font-medium text-gray-900">{{ crypto.symbol }}</p>
@@ -141,7 +151,8 @@
                 </div>
               </div>
               <div class="text-right">
-                <p class="font-medium text-gray-900">${{ formatCurrency(crypto.quantity * crypto.averagePrice) }}</p>
+                <p class="font-medium text-gray-900">
+                  ${{ formatCurrency(crypto.quantity * crypto.averagePrice) }}</p>
                 <p class="text-sm text-gray-500">Avg: ${{ formatCurrency(crypto.averagePrice) }}</p>
               </div>
             </div>
@@ -161,14 +172,19 @@
         <form @submit.prevent="handleCreateAccount">
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
-            <input v-model="newAccountName" type="text" required class="input-field" placeholder="My Investment Account">
+            <input v-model="newAccountName" type="text" required class="input-field"
+                   placeholder="My Investment Account">
           </div>
           <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Initial Cash Balance (optional)</label>
-            <input v-model.number="newAccountBalance" type="number" step="0.01" class="input-field" placeholder="0.00">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Initial Cash Balance
+              (optional)</label>
+            <input v-model.number="newAccountBalance" type="number" step="0.01" class="input-field"
+                   placeholder="0.00">
           </div>
           <div class="flex gap-2">
-            <button type="button" @click="showCreateAccount = false" class="btn-secondary flex-1">Cancel</button>
+            <button type="button" @click="showCreateAccount = false" class="btn-secondary flex-1">
+              Cancel
+            </button>
             <button type="submit" class="btn-primary flex-1">Create</button>
           </div>
         </form>
@@ -186,7 +202,8 @@
         <form @submit.prevent="handleCreateTransaction">
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
-            <input v-model="newTransaction.symbol" type="text" required class="input-field" placeholder="AAPL, BTC">
+            <input v-model="newTransaction.symbol" type="text" required class="input-field"
+                   placeholder="AAPL, BTC">
           </div>
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
@@ -207,11 +224,13 @@
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-              <input v-model.number="newTransaction.quantity" type="number" step="0.00000001" required class="input-field">
+              <input v-model.number="newTransaction.quantity" type="number" step="0.00000001"
+                     required class="input-field">
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
-              <input v-model.number="newTransaction.price" type="number" step="0.01" required class="input-field">
+              <input v-model.number="newTransaction.price" type="number" step="0.01" required
+                     class="input-field">
             </div>
           </div>
           <div class="mb-6">
@@ -219,7 +238,9 @@
             <textarea v-model="newTransaction.notes" class="input-field" rows="2"></textarea>
           </div>
           <div class="flex gap-2">
-            <button type="button" @click="showAddTransaction = false" class="btn-secondary flex-1">Cancel</button>
+            <button type="button" @click="showAddTransaction = false" class="btn-secondary flex-1">
+              Cancel
+            </button>
             <button type="submit" class="btn-primary flex-1">Add Transaction</button>
           </div>
         </form>
@@ -229,9 +250,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useCurrentStore } from '@/stores/current'
-import { storeToRefs } from 'pinia'
+import {ref, computed, onMounted} from 'vue'
+import {useCurrentStore} from '@/stores/current'
+import {storeToRefs} from 'pinia'
 
 const store = useCurrentStore()
 
@@ -269,7 +290,7 @@ const cryptoHoldings = computed(() => holdings.value.filter(h => h.assetType ===
 
 // Methods
 const formatCurrency = (value: number): string => {
-  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
 }
 
 const refresh = async () => {
