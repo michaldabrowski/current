@@ -9,7 +9,7 @@ node {
     download = true
 }
 
-val buildDir = layout.buildDirectory.dir("dist")
+val frontendDistDir = layout.projectDirectory.dir("dist")
 
 // Configure the existing npmInstall task
 tasks.named("npmInstall") {
@@ -28,7 +28,7 @@ tasks.register<com.github.gradle.node.npm.task.NpmTask>("buildFrontend") {
     inputs.file("package.json")
     inputs.file("vite.config.ts")
     inputs.file("tsconfig.json")
-    outputs.dir(buildDir)
+    outputs.dir(frontendDistDir)
 }
 
 tasks.register<com.github.gradle.node.npm.task.NpmTask>("dev") {
@@ -61,7 +61,7 @@ tasks.register<com.github.gradle.node.npm.task.NpmTask>("typeCheck") {
 
 // Configure the existing clean task instead of creating a new one
 tasks.named<Delete>("clean") {
-    delete(buildDir)
+    delete(frontendDistDir)
     delete("node_modules/.cache")
 }
 
