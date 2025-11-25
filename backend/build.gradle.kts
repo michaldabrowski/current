@@ -10,15 +10,6 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
 }
 
-group = "io.dabrowski"
-version = "0.1.0"
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
 kotlin {
     jvmToolchain(21)
 }
@@ -74,18 +65,12 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// Configure backend to serve frontend static files
-tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+val copyFrontendToBuild by tasks.registering(Copy::class) {
     dependsOn(":frontend:buildFrontend")
-    from("${project(":frontend").layout.buildDirectory.dir("dist").get()}") {
-        into("static")
-    }
+    from("${project(":frontend").projectDir}/dist")
+    into("${layout.buildDirectory.get()}/resources/main/static")
 }
 
-// Development task that doesn't include frontend files
-tasks.register<org.springframework.boot.gradle.tasks.run.BootRun>("bootRunDev") {
-    group = "application"
-    description = "Run the application for development (without frontend static files)"
-    classpath = sourceSets["main"].runtimeClasspath
-    mainClass = "io.dabrowski.current.CurrentApplicationKt"
+tasks.named("processResources") {
+    dependsOn(copyFrontendToBuild)
 }

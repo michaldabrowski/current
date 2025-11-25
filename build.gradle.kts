@@ -8,10 +8,10 @@ plugins {
 }
 
 allprojects {
-    version = "0.1.0"
+    group = "io.dabrowski"
+    version = "0.0.1"
 }
 
-// Global tasks for the entire project
 tasks.register("buildAll") {
     group = "build"
     description = "Build both backend and frontend"
@@ -24,11 +24,11 @@ tasks.register("runDev") {
     doLast {
         println("=".repeat(80))
         println("To run both backend and frontend for development:")
-        println("1. In terminal 1, run: ./gradlew :backend:bootRunDev")
+        println("1. In terminal 1, run: ./gradlew :backend:bootRun")
         println("2. In terminal 2, run: ./gradlew :frontend:dev")
         println()
-        println("Backend will be available at: http://localhost:8080")
-        println("Frontend will be available at: http://localhost:5173")
+        println("Backend with static frontend available at: http://localhost:8080")
+        println("Hot-reloaded frontend available at: http://localhost:5173")
         println("=".repeat(80))
     }
 }
@@ -36,7 +36,7 @@ tasks.register("runDev") {
 tasks.register("runBackend") {
     group = "application"
     description = "Run backend for development"
-    dependsOn(":backend:bootRunDev")
+    dependsOn(":backend:bootRun")
 }
 
 tasks.register("runFrontend") {
