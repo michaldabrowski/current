@@ -6,5 +6,5 @@
 ../gradlew ktlintCheck # ktlint checker
 ../gradlew ktlintFormat # ktlint formatter
 
-../gradlew bootRunDev # for dev run
+../gradlew bootRun # for dev run
 ```
