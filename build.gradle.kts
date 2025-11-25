@@ -27,7 +27,7 @@ tasks.register("runDev") {
         println("1. In terminal 1, run: ./gradlew :backend:bootRun")
         println("2. In terminal 2, run: ./gradlew :frontend:dev")
         println()
-        println("Backend with static available at: http://localhost:8080")
+        println("Backend with static frontend available at: http://localhost:8080")
         println("Hot-reloaded frontend available at: http://localhost:5173")
         println("=".repeat(80))
     }
