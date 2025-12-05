@@ -1,6 +1,6 @@
 spring:
   application:
-    name: current-api
+    name: current
 
   # Default profile (development with H2)
   datasource:

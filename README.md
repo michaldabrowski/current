@@ -7,10 +7,13 @@ A financial portfolio application playground.
 ### Setup
 
 ```bash
-./gradlew buildAll # to build all
-./gradlew testAll # to test all
+# build project
+./gradlew buildAll
+
+# run tests
+./gradlew testAll
 
 # local development
-./gradlew runFrontend # terminal tab 1 for frontend
-./gradlew runBackend # terminal tab 2 for backend
+./gradlew runFrontend 
+./gradlew runBackend
 ```
