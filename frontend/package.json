@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=24.11.1"
+    "node": ">=25.2.1"
   },
   "scripts": {
     "dev": "vite",
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@tsconfig/node24": "^24.0.3",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.3",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.8.1",
