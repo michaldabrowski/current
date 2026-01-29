@@ -74,6 +74,13 @@ backend/*.log
 .env.production
 .env.staging
 
+# Docker
+docker/backups/
+docker/seed/*.sql
+
+# Keep the seed directory but ignore generated seed files
+!docker/seed/.gitkeep
+
 # Security
 *.key
 *.pem

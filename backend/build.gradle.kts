@@ -66,6 +66,22 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// Load .env file and set environment variables for bootRun
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile
+            .readLines()
+            .filter { it.isNotBlank() && !it.startsWith("#") }
+            .forEach { line ->
+                val parts = line.split("=", limit = 2)
+                if (parts.size == 2) {
+                    environment(parts[0].trim(), parts[1].trim())
+                }
+            }
+    }
+}
+
 val copyFrontendToBuild by tasks.registering(Copy::class) {
     dependsOn(":frontend:buildFrontend")
     from("${project(":frontend").projectDir}/dist")

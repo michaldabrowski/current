@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: current-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-current}
+      POSTGRES_USER: ${POSTGRES_USER:-current_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - current-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-current_user} -d ${POSTGRES_DB:-current}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - current-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: current-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - current-pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - current-network
+
+volumes:
+  current-postgres-data:
+    name: current-postgres-data
+  current-pgadmin-data:
+    name: current-pgadmin-data
+
+networks:
+  current-network:
+    name: current-network
+    driver: bridge
