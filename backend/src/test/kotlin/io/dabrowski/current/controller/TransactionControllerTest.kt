@@ -233,4 +233,70 @@ class TransactionControllerTest {
                     .content("invalid json"),
             ).andExpect(status().isBadRequest())
     }
+
+    @Test
+    fun `should return 400 when creating transaction with blank symbol`() {
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                            "accountId": 1,
+                            "symbol": "",
+                            "type": "BUY",
+                            "assetType": "STOCK",
+                            "quantity": 10,
+                            "price": 150.00
+                        }
+                        """,
+                    ),
+            ).andExpect(status().isBadRequest())
+    }
+
+    @Test
+    fun `should return 400 when creating transaction with zero quantity`() {
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                            "accountId": 1,
+                            "symbol": "AAPL",
+                            "type": "BUY",
+                            "assetType": "STOCK",
+                            "quantity": 0,
+                            "price": 150.00
+                        }
+                        """,
+                    ),
+            ).andExpect(status().isBadRequest())
+    }
+
+    @Test
+    fun `should return 400 when creating transaction with negative price`() {
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                            "accountId": 1,
+                            "symbol": "AAPL",
+                            "type": "BUY",
+                            "assetType": "STOCK",
+                            "quantity": 10,
+                            "price": -50.00
+                        }
+                        """,
+                    ),
+            ).andExpect(status().isBadRequest())
+    }
 }

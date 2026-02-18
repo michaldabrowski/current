@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
@@ -153,5 +154,16 @@ class AccountControllerTest {
                     .content(objectMapper.writeValueAsString(request)),
             ).andExpect(status().isOk())
             .andExpect(jsonPath("$.cashBalance").value(999999999999.99))
+    }
+
+    @Test
+    fun `should return 400 when updating cash balance with negative value`() {
+        // Expect
+        mockMvc
+            .perform(
+                put("/api/accounts/1/cash")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"newBalance": -100.00}"""),
+            ).andExpect(status().isBadRequest())
     }
 }

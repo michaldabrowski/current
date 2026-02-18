@@ -5,6 +5,9 @@ import io.dabrowski.current.entity.Transaction
 import io.dabrowski.current.entity.TransactionType
 import io.dabrowski.current.service.HoldingResponse
 import io.dabrowski.current.service.TransactionService
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -46,7 +49,7 @@ class TransactionController(
 
     @PostMapping
     fun createTransaction(
-        @RequestBody request: CreateTransactionRequest,
+        @Valid @RequestBody request: CreateTransactionRequest,
     ): ResponseEntity<Transaction> {
         val transaction =
             transactionService.create(
@@ -73,10 +76,13 @@ class TransactionController(
 
 data class CreateTransactionRequest(
     val accountId: Long,
+    @NotBlank(message = "Symbol cannot be blank")
     val symbol: String,
     val type: TransactionType,
     val assetType: AssetType,
+    @Positive(message = "Quantity must be positive")
     val quantity: BigDecimal,
+    @Positive(message = "Price must be positive")
     val price: BigDecimal,
     val notes: String? = null,
 )

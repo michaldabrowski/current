@@ -56,7 +56,7 @@ class AccountController(
     @PutMapping("/{id}/cash")
     fun updateCashBalance(
         @PathVariable id: Long,
-        @RequestBody request: UpdateCashRequest,
+        @Valid @RequestBody request: UpdateCashRequest,
     ): ResponseEntity<Account> {
         val updatedAccount = accountService.updateCashBalance(id, request.newBalance)
         return if (updatedAccount != null) {
@@ -85,5 +85,6 @@ data class CreateAccountRequest(
 )
 
 data class UpdateCashRequest(
+    @PositiveOrZero(message = "Cash balance must be zero or positive")
     val newBalance: BigDecimal,
 )
