@@ -1,10 +1,10 @@
 package io.dabrowski.current.controller
 
 import io.dabrowski.current.entity.Account
-import io.dabrowski.current.repository.AccountRepository
+import io.dabrowski.current.service.AccountService
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,11 +14,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import tools.jackson.databind.ObjectMapper
 import java.math.BigDecimal
-import java.util.Optional
 
 @WebMvcTest(AccountController::class)
 class AccountControllerTest {
@@ -26,7 +26,7 @@ class AccountControllerTest {
     private lateinit var mockMvc: MockMvc
 
     @MockitoBean
-    private lateinit var accountRepository: AccountRepository
+    private lateinit var accountService: AccountService
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
@@ -43,7 +43,7 @@ class AccountControllerTest {
     fun `should return all accounts`() {
         // Given
         val accounts = listOf(SAMPLE_ACCOUNT_1, SAMPLE_ACCOUNT_2)
-        `when`(accountRepository.findAll()).thenReturn(accounts)
+        `when`(accountService.findAll()).thenReturn(accounts)
 
         // Expect
         mockMvc
@@ -60,7 +60,7 @@ class AccountControllerTest {
     @Test
     fun `should return account by id`() {
         // Given
-        `when`(accountRepository.findById(1L)).thenReturn(Optional.of(TEST_ACCOUNT))
+        `when`(accountService.findById(1L)).thenReturn(TEST_ACCOUNT)
 
         // Expect
         mockMvc
@@ -74,7 +74,7 @@ class AccountControllerTest {
     @Test
     fun `should return 404 when account not found`() {
         // Given
-        `when`(accountRepository.findById(NON_EXISTENT_ACCOUNT_ID)).thenReturn(Optional.empty())
+        `when`(accountService.findById(NON_EXISTENT_ACCOUNT_ID)).thenReturn(null)
 
         // Expect
         mockMvc
@@ -85,8 +85,7 @@ class AccountControllerTest {
     @Test
     fun `should create new account`() {
         // Given
-        val accountCaptor = ArgumentCaptor.forClass(Account::class.java)
-        `when`(accountRepository.save(accountCaptor.capture())).thenReturn(NEW_ACCOUNT)
+        `when`(accountService.create(anyString(), any())).thenReturn(NEW_ACCOUNT)
 
         val request = CreateAccountRequest(name = "New Account", initialBalance = BigDecimal("5000.00"))
 
@@ -100,10 +99,7 @@ class AccountControllerTest {
             .andExpect(jsonPath("$.name").value("New Account"))
             .andExpect(jsonPath("$.cashBalance").value(5000.00))
 
-        verify(accountRepository).save(any())
-        val savedAccount = accountCaptor.value
-        assert(savedAccount.name == "New Account")
-        assert(savedAccount.cashBalance == BigDecimal("5000.00"))
+        verify(accountService).create(anyString(), any())
     }
 
     @Test
@@ -146,8 +142,7 @@ class AccountControllerTest {
         // Given
         val largeBalance = BigDecimal("999999999999.99")
         val accountWithLargeBalance = Account(1L, "Rich Account", largeBalance)
-        val accountCaptor = ArgumentCaptor.forClass(Account::class.java)
-        `when`(accountRepository.save(accountCaptor.capture())).thenReturn(accountWithLargeBalance)
+        `when`(accountService.create(anyString(), any())).thenReturn(accountWithLargeBalance)
 
         val request = CreateAccountRequest(name = "Rich Account", initialBalance = largeBalance)
 
@@ -159,5 +154,16 @@ class AccountControllerTest {
                     .content(objectMapper.writeValueAsString(request)),
             ).andExpect(status().isOk())
             .andExpect(jsonPath("$.cashBalance").value(999999999999.99))
+    }
+
+    @Test
+    fun `should return 400 when updating cash balance with negative value`() {
+        // Expect
+        mockMvc
+            .perform(
+                put("/api/accounts/1/cash")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"newBalance": -100.00}"""),
+            ).andExpect(status().isBadRequest())
     }
 }

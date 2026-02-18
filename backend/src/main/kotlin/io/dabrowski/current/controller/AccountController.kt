@@ -1,7 +1,7 @@
 package io.dabrowski.current.controller
 
 import io.dabrowski.current.entity.Account
-import io.dabrowski.current.repository.AccountRepository
+import io.dabrowski.current.service.AccountService
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
@@ -15,21 +15,20 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
-import java.time.LocalDateTime
 
 @RestController
 @RequestMapping("/api/accounts")
 class AccountController(
-    private val accountRepository: AccountRepository,
+    private val accountService: AccountService,
 ) {
     @GetMapping
-    fun getAllAccounts(): List<Account> = accountRepository.findAll()
+    fun getAllAccounts(): List<Account> = accountService.findAll()
 
     @GetMapping("/{id}")
     fun getAccount(
         @PathVariable id: Long,
     ): ResponseEntity<Account> {
-        val account = accountRepository.findById(id).orElse(null)
+        val account = accountService.findById(id)
         return if (account != null) {
             ResponseEntity.ok(account)
         } else {
@@ -41,7 +40,7 @@ class AccountController(
     fun getAccountWithTransactions(
         @PathVariable id: Long,
     ): ResponseEntity<Account> {
-        val account = accountRepository.findByIdWithTransactions(id)
+        val account = accountService.findByIdWithTransactions(id)
         return if (account != null) {
             ResponseEntity.ok(account)
         } else {
@@ -52,28 +51,16 @@ class AccountController(
     @PostMapping
     fun createAccount(
         @Valid @RequestBody request: CreateAccountRequest,
-    ): Account {
-        val account =
-            Account(
-                name = request.name,
-                cashBalance = request.initialBalance ?: BigDecimal.ZERO,
-            )
-        return accountRepository.save(account)
-    }
+    ): Account = accountService.create(request.name, request.initialBalance)
 
     @PutMapping("/{id}/cash")
     fun updateCashBalance(
         @PathVariable id: Long,
-        @RequestBody request: UpdateCashRequest,
+        @Valid @RequestBody request: UpdateCashRequest,
     ): ResponseEntity<Account> {
-        val account = accountRepository.findById(id).orElse(null)
-        return if (account != null) {
-            val updatedAccount =
-                account.copy(
-                    cashBalance = request.newBalance,
-                    updatedAt = LocalDateTime.now(),
-                )
-            ResponseEntity.ok(accountRepository.save(updatedAccount))
+        val updatedAccount = accountService.updateCashBalance(id, request.newBalance)
+        return if (updatedAccount != null) {
+            ResponseEntity.ok(updatedAccount)
         } else {
             ResponseEntity.notFound().build()
         }
@@ -83,8 +70,7 @@ class AccountController(
     fun deleteAccount(
         @PathVariable id: Long,
     ): ResponseEntity<Void> =
-        if (accountRepository.existsById(id)) {
-            accountRepository.deleteById(id)
+        if (accountService.delete(id)) {
             ResponseEntity.noContent().build()
         } else {
             ResponseEntity.notFound().build()
@@ -99,5 +85,6 @@ data class CreateAccountRequest(
 )
 
 data class UpdateCashRequest(
+    @PositiveOrZero(message = "Cash balance must be zero or positive")
     val newBalance: BigDecimal,
 )

@@ -3,8 +3,11 @@ package io.dabrowski.current.controller
 import io.dabrowski.current.entity.AssetType
 import io.dabrowski.current.entity.Transaction
 import io.dabrowski.current.entity.TransactionType
-import io.dabrowski.current.repository.AccountRepository
-import io.dabrowski.current.repository.TransactionRepository
+import io.dabrowski.current.service.HoldingResponse
+import io.dabrowski.current.service.TransactionService
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -17,17 +20,16 @@ import java.math.BigDecimal
 @RestController
 @RequestMapping("/api/transactions")
 class TransactionController(
-    private val accountRepository: AccountRepository,
-    private val transactionRepository: TransactionRepository,
+    private val transactionService: TransactionService,
 ) {
     @GetMapping
-    fun getAllTransactions(): List<Transaction> = transactionRepository.findAll()
+    fun getAllTransactions(): List<Transaction> = transactionService.findAll()
 
     @GetMapping("/{id}")
     fun getTransaction(
         @PathVariable id: Long,
     ): ResponseEntity<Transaction> {
-        val transaction = transactionRepository.findById(id).orElse(null)
+        val transaction = transactionService.findById(id)
         return if (transaction != null) {
             ResponseEntity.ok(transaction)
         } else {
@@ -38,90 +40,49 @@ class TransactionController(
     @GetMapping("/account/{accountId}")
     fun getTransactionsByAccount(
         @PathVariable accountId: Long,
-    ): List<Transaction> = transactionRepository.findByAccountIdOrderByDateDesc(accountId)
+    ): List<Transaction> = transactionService.findByAccountId(accountId)
 
     @GetMapping("/symbol/{symbol}")
     fun getTransactionsBySymbol(
         @PathVariable symbol: String,
-    ): List<Transaction> = transactionRepository.findBySymbol(symbol)
+    ): List<Transaction> = transactionService.findBySymbol(symbol)
 
     @PostMapping
     fun createTransaction(
-        @RequestBody request: CreateTransactionRequest,
+        @Valid @RequestBody request: CreateTransactionRequest,
     ): ResponseEntity<Transaction> {
-        val account =
-            accountRepository.findById(request.accountId).orElse(null)
-                ?: return ResponseEntity.badRequest().build()
-
         val transaction =
-            Transaction(
-                account = account,
+            transactionService.create(
+                accountId = request.accountId,
                 symbol = request.symbol,
                 type = request.type,
                 assetType = request.assetType,
                 quantity = request.quantity,
                 price = request.price,
-                totalAmount = request.quantity * request.price,
                 notes = request.notes,
             )
-
-        val savedTransaction = transactionRepository.save(transaction)
-        return ResponseEntity.ok(savedTransaction)
+        return if (transaction != null) {
+            ResponseEntity.ok(transaction)
+        } else {
+            ResponseEntity.badRequest().build()
+        }
     }
 
     @GetMapping("/holdings/{accountId}")
     fun getHoldings(
         @PathVariable accountId: Long,
-    ): List<HoldingResponse> {
-        val transactions = transactionRepository.findByAccountId(accountId)
-
-        return transactions
-            .groupBy { it.symbol }
-            .mapNotNull { (symbol, txns) ->
-                // Calculate current quantity (buys - sells)
-                val totalQuantity =
-                    txns.sumOf {
-                        if (it.type == TransactionType.BUY) it.quantity else -it.quantity
-                    }
-
-                // Only process if we still hold this asset
-                if (totalQuantity <= BigDecimal.ZERO) return@mapNotNull null
-
-                // Calculate weighted average price of all purchases
-                val buyTransactions = txns.filter { it.type == TransactionType.BUY }
-                val totalPurchaseAmount = buyTransactions.sumOf { it.totalAmount }
-                val totalPurchaseQuantity = buyTransactions.sumOf { it.quantity }
-
-                val averagePrice =
-                    if (totalPurchaseQuantity > BigDecimal.ZERO) {
-                        totalPurchaseAmount / totalPurchaseQuantity
-                    } else {
-                        BigDecimal.ZERO
-                    }
-
-                HoldingResponse(
-                    symbol = symbol,
-                    quantity = totalQuantity,
-                    averagePrice = averagePrice,
-                    assetType = txns.first().assetType,
-                )
-            }
-    }
+    ): List<HoldingResponse> = transactionService.getHoldings(accountId)
 }
 
 data class CreateTransactionRequest(
     val accountId: Long,
+    @NotBlank(message = "Symbol cannot be blank")
     val symbol: String,
     val type: TransactionType,
     val assetType: AssetType,
+    @Positive(message = "Quantity must be positive")
     val quantity: BigDecimal,
+    @Positive(message = "Price must be positive")
     val price: BigDecimal,
     val notes: String? = null,
-)
-
-data class HoldingResponse(
-    val symbol: String,
-    val quantity: BigDecimal,
-    val averagePrice: BigDecimal,
-    val assetType: AssetType,
 )

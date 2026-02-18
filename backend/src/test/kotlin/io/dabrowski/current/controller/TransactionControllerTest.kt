@@ -4,201 +4,299 @@ import io.dabrowski.current.entity.Account
 import io.dabrowski.current.entity.AssetType
 import io.dabrowski.current.entity.Transaction
 import io.dabrowski.current.entity.TransactionType
-import io.dabrowski.current.repository.AccountRepository
-import io.dabrowski.current.repository.TransactionRepository
-import org.junit.jupiter.api.Assertions.assertEquals
+import io.dabrowski.current.service.HoldingResponse
+import io.dabrowski.current.service.TransactionService
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
-import org.mockito.Mock
+import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.`when`
-import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
+import org.springframework.http.MediaType
+import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 import java.math.BigDecimal
 
-@ExtendWith(MockitoExtension::class)
+@WebMvcTest(TransactionController::class)
 class TransactionControllerTest {
-    @Mock
-    private lateinit var transactionRepository: TransactionRepository
+    @Autowired
+    private lateinit var mockMvc: MockMvc
 
-    @Mock
-    private lateinit var accountRepository: AccountRepository
+    @MockitoBean
+    private lateinit var transactionService: TransactionService
 
-    @InjectMocks
-    private lateinit var transactionController: TransactionController
+    @Autowired
+    private lateinit var objectMapper: ObjectMapper
 
-    @Test
-    fun `getHoldings should calculate correct average price with multiple buys`() {
-        // Given
-        val accountId = 1L
-        val account = Account(id = accountId, name = "Test Account")
-
-        val transactions =
-            listOf(
-                Transaction(
-                    id = 1L,
-                    account = account,
-                    symbol = "AAPL",
-                    type = TransactionType.BUY,
-                    assetType = AssetType.STOCK,
-                    quantity = BigDecimal("10"),
-                    price = BigDecimal("100.00"),
-                    totalAmount = BigDecimal("1000.00"),
-                ),
-                Transaction(
-                    id = 2L,
-                    account = account,
-                    symbol = "AAPL",
-                    type = TransactionType.BUY,
-                    assetType = AssetType.STOCK,
-                    quantity = BigDecimal("10"),
-                    price = BigDecimal("200.00"),
-                    totalAmount = BigDecimal("2000.00"),
-                ),
+    companion object {
+        private val TEST_ACCOUNT = Account(id = 1L, name = "Test Account")
+        private val SAMPLE_TRANSACTION =
+            Transaction(
+                id = 1L,
+                account = TEST_ACCOUNT,
+                symbol = "AAPL",
+                type = TransactionType.BUY,
+                assetType = AssetType.STOCK,
+                quantity = BigDecimal("10"),
+                price = BigDecimal("150.00"),
+                totalAmount = BigDecimal("1500.00"),
             )
-
-        `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
-
-        // When
-        val holdings = transactionController.getHoldings(accountId)
-
-        // Then
-        assertEquals(1, holdings.size)
-        val appleHolding = holdings[0]
-        assertEquals("AAPL", appleHolding.symbol)
-        assertEquals(BigDecimal("20"), appleHolding.quantity)
-        assertEquals(BigDecimal("150.00"), appleHolding.averagePrice)
-        assertEquals(AssetType.STOCK, appleHolding.assetType)
     }
 
     @Test
-    fun `getHoldings should handle buy and sell transactions correctly`() {
+    fun `should return all transactions`() {
         // Given
-        val accountId = 1L
-        val account = Account(id = accountId, name = "Test Account")
+        `when`(transactionService.findAll()).thenReturn(listOf(SAMPLE_TRANSACTION))
 
-        val transactions =
-            listOf(
-                Transaction(
-                    id = 1L,
-                    account = account,
-                    symbol = "AAPL",
-                    type = TransactionType.BUY,
-                    assetType = AssetType.STOCK,
-                    quantity = BigDecimal("20"),
-                    price = BigDecimal("100.00"),
-                    totalAmount = BigDecimal("2000.00"),
-                ),
-                Transaction(
-                    id = 2L,
-                    account = account,
-                    symbol = "AAPL",
-                    type = TransactionType.SELL,
-                    assetType = AssetType.STOCK,
-                    quantity = BigDecimal("5"),
-                    price = BigDecimal("120.00"),
-                    totalAmount = BigDecimal("600.00"),
-                ),
-            )
-
-        `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
-
-        // When
-        val holdings = transactionController.getHoldings(accountId)
-
-        // Then
-        assertEquals(1, holdings.size)
-        val appleHolding = holdings[0]
-        assertEquals("AAPL", appleHolding.symbol)
-        assertEquals(BigDecimal("15"), appleHolding.quantity) // 20 - 5 = 15
-        assertEquals(BigDecimal("100.00"), appleHolding.averagePrice) // Still $100 avg purchase price
-        assertEquals(AssetType.STOCK, appleHolding.assetType)
+        // Expect
+        mockMvc
+            .perform(get("/api/transactions"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].symbol").value("AAPL"))
+            .andExpect(jsonPath("$[0].quantity").value(10))
+            .andExpect(jsonPath("$[0].price").value(150.00))
     }
 
     @Test
-    fun `getHoldings should exclude assets with zero or negative quantity`() {
+    fun `should return transaction by id`() {
         // Given
-        val accountId = 1L
-        val account = Account(id = accountId, name = "Test Account")
+        `when`(transactionService.findById(1L)).thenReturn(SAMPLE_TRANSACTION)
 
-        val transactions =
-            listOf(
-                Transaction(
-                    id = 1L,
-                    account = account,
-                    symbol = "AAPL",
-                    type = TransactionType.BUY,
-                    assetType = AssetType.STOCK,
-                    quantity = BigDecimal("10"),
-                    price = BigDecimal("100.00"),
-                    totalAmount = BigDecimal("1000.00"),
-                ),
-                Transaction(
-                    id = 2L,
-                    account = account,
-                    symbol = "AAPL",
-                    type = TransactionType.SELL,
-                    assetType = AssetType.STOCK,
-                    quantity = BigDecimal("10"),
-                    price = BigDecimal("120.00"),
-                    totalAmount = BigDecimal("1200.00"),
-                ),
-            )
-
-        `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
-
-        // When
-        val holdings = transactionController.getHoldings(accountId)
-
-        // Then
-        assertEquals(0, holdings.size) // Should be empty since we sold everything
+        // Expect
+        mockMvc
+            .perform(get("/api/transactions/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.symbol").value("AAPL"))
+            .andExpect(jsonPath("$.type").value("BUY"))
+            .andExpect(jsonPath("$.assetType").value("STOCK"))
     }
 
     @Test
-    fun `getHoldings should handle multiple different assets`() {
+    fun `should return 404 when transaction not found`() {
         // Given
-        val accountId = 1L
-        val account = Account(id = accountId, name = "Test Account")
+        `when`(transactionService.findById(999L)).thenReturn(null)
 
-        val transactions =
+        // Expect
+        mockMvc
+            .perform(get("/api/transactions/999"))
+            .andExpect(status().isNotFound())
+    }
+
+    @Test
+    fun `should return transactions by account id`() {
+        // Given
+        `when`(transactionService.findByAccountId(1L))
+            .thenReturn(listOf(SAMPLE_TRANSACTION))
+
+        // Expect
+        mockMvc
+            .perform(get("/api/transactions/account/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].symbol").value("AAPL"))
+    }
+
+    @Test
+    fun `should return transactions by symbol`() {
+        // Given
+        `when`(transactionService.findBySymbol("AAPL"))
+            .thenReturn(listOf(SAMPLE_TRANSACTION))
+
+        // Expect
+        mockMvc
+            .perform(get("/api/transactions/symbol/AAPL"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(1))
+    }
+
+    @Test
+    fun `should create transaction successfully`() {
+        // Given
+        doAnswer { SAMPLE_TRANSACTION }
+            .`when`(transactionService)
+            .create(
+                accountId = 1L,
+                symbol = "AAPL",
+                type = TransactionType.BUY,
+                assetType = AssetType.STOCK,
+                quantity = BigDecimal("10"),
+                price = BigDecimal("150.00"),
+                notes = null,
+            )
+
+        val request =
+            CreateTransactionRequest(
+                accountId = 1L,
+                symbol = "AAPL",
+                type = TransactionType.BUY,
+                assetType = AssetType.STOCK,
+                quantity = BigDecimal("10"),
+                price = BigDecimal("150.00"),
+            )
+
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)),
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$.symbol").value("AAPL"))
+            .andExpect(jsonPath("$.type").value("BUY"))
+            .andExpect(jsonPath("$.totalAmount").value(1500.00))
+    }
+
+    @Test
+    fun `should return 400 when creating transaction for non-existent account`() {
+        // Given
+        doAnswer { null }
+            .`when`(transactionService)
+            .create(
+                accountId = 999L,
+                symbol = "AAPL",
+                type = TransactionType.BUY,
+                assetType = AssetType.STOCK,
+                quantity = BigDecimal("10"),
+                price = BigDecimal("150.00"),
+                notes = null,
+            )
+
+        val request =
+            CreateTransactionRequest(
+                accountId = 999L,
+                symbol = "AAPL",
+                type = TransactionType.BUY,
+                assetType = AssetType.STOCK,
+                quantity = BigDecimal("10"),
+                price = BigDecimal("150.00"),
+            )
+
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)),
+            ).andExpect(status().isBadRequest())
+    }
+
+    @Test
+    fun `should return holdings for account`() {
+        // Given
+        val holdings =
             listOf(
-                Transaction(
-                    id = 1L,
-                    account = account,
+                HoldingResponse(
                     symbol = "AAPL",
-                    type = TransactionType.BUY,
-                    assetType = AssetType.STOCK,
                     quantity = BigDecimal("10"),
-                    price = BigDecimal("150.00"),
-                    totalAmount = BigDecimal("1500.00"),
+                    averagePrice = BigDecimal("150.00"),
+                    assetType = AssetType.STOCK,
                 ),
-                Transaction(
-                    id = 2L,
-                    account = account,
+                HoldingResponse(
                     symbol = "BTC",
-                    type = TransactionType.BUY,
-                    assetType = AssetType.CRYPTO,
                     quantity = BigDecimal("0.5"),
-                    price = BigDecimal("50000.00"),
-                    totalAmount = BigDecimal("25000.00"),
+                    averagePrice = BigDecimal("50000.00"),
+                    assetType = AssetType.CRYPTO,
                 ),
             )
+        `when`(transactionService.getHoldings(1L)).thenReturn(holdings)
 
-        `when`(transactionRepository.findByAccountId(accountId)).thenReturn(transactions)
+        // Expect
+        mockMvc
+            .perform(get("/api/transactions/holdings/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].symbol").value("AAPL"))
+            .andExpect(jsonPath("$[0].quantity").value(10))
+            .andExpect(jsonPath("$[0].averagePrice").value(150.00))
+            .andExpect(jsonPath("$[0].assetType").value("STOCK"))
+            .andExpect(jsonPath("$[1].symbol").value("BTC"))
+            .andExpect(jsonPath("$[1].assetType").value("CRYPTO"))
+    }
 
-        // When
-        val holdings = transactionController.getHoldings(accountId)
+    @Test
+    fun `should return 400 when creating transaction with malformed JSON`() {
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("invalid json"),
+            ).andExpect(status().isBadRequest())
+    }
 
-        // Then
-        assertEquals(2, holdings.size)
+    @Test
+    fun `should return 400 when creating transaction with blank symbol`() {
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                            "accountId": 1,
+                            "symbol": "",
+                            "type": "BUY",
+                            "assetType": "STOCK",
+                            "quantity": 10,
+                            "price": 150.00
+                        }
+                        """,
+                    ),
+            ).andExpect(status().isBadRequest())
+    }
 
-        val appleHolding = holdings.find { it.symbol == "AAPL" }!!
-        assertEquals(BigDecimal("10"), appleHolding.quantity)
-        assertEquals(BigDecimal("150.00"), appleHolding.averagePrice)
-        assertEquals(AssetType.STOCK, appleHolding.assetType)
+    @Test
+    fun `should return 400 when creating transaction with zero quantity`() {
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                            "accountId": 1,
+                            "symbol": "AAPL",
+                            "type": "BUY",
+                            "assetType": "STOCK",
+                            "quantity": 0,
+                            "price": 150.00
+                        }
+                        """,
+                    ),
+            ).andExpect(status().isBadRequest())
+    }
 
-        val btcHolding = holdings.find { it.symbol == "BTC" }!!
-        assertEquals(BigDecimal("0.5"), btcHolding.quantity)
-        assertEquals(BigDecimal("50000.00"), btcHolding.averagePrice)
-        assertEquals(AssetType.CRYPTO, btcHolding.assetType)
+    @Test
+    fun `should return 400 when creating transaction with negative price`() {
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/transactions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                            "accountId": 1,
+                            "symbol": "AAPL",
+                            "type": "BUY",
+                            "assetType": "STOCK",
+                            "quantity": 10,
+                            "price": -50.00
+                        }
+                        """,
+                    ),
+            ).andExpect(status().isBadRequest())
     }
 }
