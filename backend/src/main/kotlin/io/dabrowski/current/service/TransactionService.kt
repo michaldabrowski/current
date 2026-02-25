@@ -48,6 +48,19 @@ class TransactionService(
         return transactionRepository.save(transaction)
     }
 
+    fun delete(id: Long): Boolean {
+        if (!transactionRepository.existsById(id)) return false
+        transactionRepository.deleteById(id)
+        return true
+    }
+
+    fun deleteAllByAccountId(accountId: Long): Int {
+        val transactions = transactionRepository.findByAccountId(accountId)
+        if (transactions.isEmpty()) return 0
+        transactionRepository.deleteAll(transactions)
+        return transactions.size
+    }
+
     fun getHoldings(accountId: Long): List<HoldingResponse> {
         val transactions = transactionRepository.findByAccountId(accountId)
 

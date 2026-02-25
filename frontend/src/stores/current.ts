@@ -3,9 +3,12 @@ import { ref, computed } from "vue";
 import {
   accountsApi,
   transactionsApi,
+  snapshotsApi,
+  demoApi,
   type Account,
   type Transaction,
   type Holding,
+  type BalanceSnapshot,
 } from "@/services/api";
 
 export const useCurrentStore = defineStore("current", () => {
@@ -14,6 +17,7 @@ export const useCurrentStore = defineStore("current", () => {
   const currentAccount = ref<Account | null>(null);
   const transactions = ref<Transaction[]>([]);
   const holdings = ref<Holding[]>([]);
+  const snapshots = ref<BalanceSnapshot[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -22,8 +26,6 @@ export const useCurrentStore = defineStore("current", () => {
     if (!currentAccount.value) return 0;
 
     const holdingsValue = holdings.value.reduce((sum, holding) => {
-      // For demo purposes, using average price as current price
-      // In real app, you'd fetch current market prices
       return sum + holding.quantity * holding.averagePrice;
     }, 0);
 
@@ -50,6 +52,10 @@ export const useCurrentStore = defineStore("current", () => {
     return holdings.value.filter((h) => h.assetType === "CRYPTO").length;
   });
 
+  const recentTransactions = computed(() => {
+    return transactions.value.slice(0, 8);
+  });
+
   // Actions
   const fetchAccounts = async () => {
     try {
@@ -59,7 +65,6 @@ export const useCurrentStore = defineStore("current", () => {
       const response = await accountsApi.getAll();
       accounts.value = response.data;
 
-      // Set first account as current if none selected
       if (accounts.value.length > 0 && !currentAccount.value) {
         const firstAccount = accounts.value[0];
         if (firstAccount) {
@@ -88,6 +93,15 @@ export const useCurrentStore = defineStore("current", () => {
       currentAccount.value = accountRes.data;
       transactions.value = transactionsRes.data;
       holdings.value = holdingsRes.data;
+
+      // Record snapshot and fetch history, guarded against rapid switching
+      const selectedId = accountId;
+      recordSnapshot(selectedId);
+      fetchSnapshots(selectedId).then((data) => {
+        if (currentAccount.value?.id === selectedId && data) {
+          snapshots.value = data;
+        }
+      });
     } catch (err) {
       error.value = "Failed to fetch account data";
       console.error("Error fetching account data:", err);
@@ -104,9 +118,7 @@ export const useCurrentStore = defineStore("current", () => {
       const response = await accountsApi.create({ name, initialBalance });
 
       accounts.value.push(response.data);
-      // Select the new account
       await selectAccount(response.data.id);
-
     } catch (err) {
       error.value = "Failed to create account";
       console.error("Error creating account:", err);
@@ -137,11 +149,146 @@ export const useCurrentStore = defineStore("current", () => {
         ...transactionData,
       });
 
-      // Refresh account data
       await selectAccount(currentAccount.value.id);
     } catch (err) {
       error.value = "Failed to create transaction";
       console.error("Error creating transaction:", err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const recordSnapshot = async (accountId: number) => {
+    try {
+      await snapshotsApi.record(accountId);
+    } catch (err) {
+      console.error("Error recording snapshot:", err);
+    }
+  };
+
+  const fetchSnapshots = async (accountId: number): Promise<BalanceSnapshot[] | null> => {
+    try {
+      const response = await snapshotsApi.getHistory(accountId);
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching snapshots:", err);
+      return null;
+    }
+  };
+
+  const deleteTransaction = async (transactionId: number) => {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      await transactionsApi.delete(transactionId);
+
+      if (currentAccount.value) {
+        await selectAccount(currentAccount.value.id);
+      }
+    } catch (err) {
+      error.value = "Failed to delete transaction";
+      console.error("Error deleting transaction:", err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteAccount = async (accountId: number): Promise<'deleted' | 'has_transactions' | 'error'> => {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      await accountsApi.delete(accountId);
+
+      accounts.value = accounts.value.filter((a) => a.id !== accountId);
+
+      if (currentAccount.value?.id === accountId) {
+        currentAccount.value = null;
+        transactions.value = [];
+        holdings.value = [];
+        snapshots.value = [];
+
+        if (accounts.value.length > 0) {
+          const first = accounts.value[0];
+          if (first) {
+            await selectAccount(first.id);
+          }
+        }
+      }
+      return 'deleted';
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' && err !== null && 'response' in err &&
+        typeof (err as Record<string, unknown>).response === 'object' &&
+        (err as { response: { status: number } }).response?.status === 409
+      ) {
+        error.value = null;
+        return 'has_transactions';
+      }
+      error.value = "Failed to delete account";
+      console.error("Error deleting account:", err);
+      return 'error';
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteAllTransactions = async (accountId: number): Promise<number> => {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const response = await transactionsApi.deleteAllByAccount(accountId);
+      const count = response.data.deleted;
+
+      if (currentAccount.value?.id === accountId) {
+        await selectAccount(accountId);
+      }
+      return count;
+    } catch (err) {
+      error.value = "Failed to delete transactions";
+      console.error("Error deleting transactions:", err);
+      return 0;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const adjustCash = async (amount: number) => {
+    if (!currentAccount.value) {
+      error.value = "No account selected";
+      return;
+    }
+
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const response = await accountsApi.adjustCash(
+        currentAccount.value.id,
+        amount,
+      );
+      currentAccount.value = response.data;
+    } catch (err) {
+      error.value = "Failed to adjust cash balance";
+      console.error("Error adjusting cash:", err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const seedDemoData = async () => {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const response = await demoApi.seed();
+      await fetchAccounts();
+      await selectAccount(response.data.id);
+    } catch (err) {
+      error.value = "Failed to seed demo data";
+      console.error("Error seeding demo data:", err);
     } finally {
       loading.value = false;
     }
@@ -153,6 +300,7 @@ export const useCurrentStore = defineStore("current", () => {
     currentAccount,
     transactions,
     holdings,
+    snapshots,
     loading,
     error,
 
@@ -162,11 +310,19 @@ export const useCurrentStore = defineStore("current", () => {
     cryptoValue,
     stocksCount,
     cryptoCount,
+    recentTransactions,
 
     // Actions
     fetchAccounts,
     selectAccount,
     createAccount,
     createTransaction,
+    deleteTransaction,
+    deleteAccount,
+    deleteAllTransactions,
+    adjustCash,
+    seedDemoData,
+    recordSnapshot,
+    fetchSnapshots,
   };
 });
