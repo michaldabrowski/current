@@ -94,9 +94,14 @@ export const useCurrentStore = defineStore("current", () => {
       transactions.value = transactionsRes.data;
       holdings.value = holdingsRes.data;
 
-      // Fire-and-forget: record snapshot and fetch history
-      recordSnapshot(accountId);
-      fetchSnapshots(accountId);
+      // Record snapshot and fetch history, guarded against rapid switching
+      const selectedId = accountId;
+      recordSnapshot(selectedId);
+      fetchSnapshots(selectedId).then((data) => {
+        if (currentAccount.value?.id === selectedId && data) {
+          snapshots.value = data;
+        }
+      });
     } catch (err) {
       error.value = "Failed to fetch account data";
       console.error("Error fetching account data:", err);
@@ -161,12 +166,13 @@ export const useCurrentStore = defineStore("current", () => {
     }
   };
 
-  const fetchSnapshots = async (accountId: number) => {
+  const fetchSnapshots = async (accountId: number): Promise<BalanceSnapshot[] | null> => {
     try {
       const response = await snapshotsApi.getHistory(accountId);
-      snapshots.value = response.data;
+      return response.data;
     } catch (err) {
       console.error("Error fetching snapshots:", err);
+      return null;
     }
   };
 

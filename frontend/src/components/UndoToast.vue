@@ -64,7 +64,7 @@ watch(() => props.visible, (val) => {
   if (val) {
     countdown.value = durationSec
     intervalId = setInterval(() => {
-      countdown.value--
+      if (countdown.value > 0) countdown.value--
     }, 1000)
     timeoutId = setTimeout(() => {
       clearTimers()
