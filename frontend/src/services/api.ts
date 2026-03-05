@@ -37,6 +37,11 @@ export interface Holding {
   assetType: "STOCK" | "CRYPTO";
 }
 
+export interface BalanceSnapshot {
+  totalValue: number;
+  snapshotDate: string;
+}
+
 export interface CreateAccountRequest {
   name: string;
   initialBalance?: number;
@@ -52,19 +57,43 @@ export interface CreateTransactionRequest {
   notes?: string;
 }
 
+export interface AdjustCashRequest {
+  amount: number;
+}
+
 // API functions
 export const accountsApi = {
   getAll: () => api.get<Account[]>("/accounts"),
   getById: (id: number) => api.get<Account>(`/accounts/${id}`),
   create: (data: CreateAccountRequest) => api.post<Account>("/accounts", data),
   delete: (id: number) => api.delete(`/accounts/${id}`),
+  adjustCash: (id: number, amount: number) =>
+    api.post<Account>(`/accounts/${id}/cash`, { amount } as AdjustCashRequest),
 };
 
 export const transactionsApi = {
   getAll: () => api.get<Transaction[]>("/transactions"),
-  getByAccount: (accountId: number) => api.get<Transaction[]>(`/transactions/account/${accountId}`),
-  getHoldings: (accountId: number) => api.get<Holding[]>(`/transactions/holdings/${accountId}`),
-  create: (data: CreateTransactionRequest) => api.post<Transaction>("/transactions", data),
+  getByAccount: (accountId: number) =>
+    api.get<Transaction[]>(`/transactions/account/${accountId}`),
+  getHoldings: (accountId: number) =>
+    api.get<Holding[]>(`/transactions/holdings/${accountId}`),
+  create: (data: CreateTransactionRequest) =>
+    api.post<Transaction>("/transactions", data),
+  delete: (id: number) => api.delete(`/transactions/${id}`),
+  deleteAllByAccount: (accountId: number) =>
+    api.delete<{ deleted: number }>(`/transactions/account/${accountId}`),
+};
+
+export const snapshotsApi = {
+  record: (accountId: number) =>
+    api.post<BalanceSnapshot>(`/snapshots/${accountId}`),
+  getHistory: (accountId: number) =>
+    api.get<BalanceSnapshot[]>(`/snapshots/${accountId}`),
+};
+
+export const demoApi = {
+  seed: () => api.post<Account>("/demo/seed"),
+  reset: () => api.delete("/demo/reset"),
 };
 
 export default api;

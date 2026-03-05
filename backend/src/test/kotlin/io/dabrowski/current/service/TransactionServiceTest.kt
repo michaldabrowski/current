@@ -7,6 +7,7 @@ import io.dabrowski.current.entity.TransactionType
 import io.dabrowski.current.repository.AccountRepository
 import io.dabrowski.current.repository.TransactionRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import java.math.BigDecimal
@@ -396,5 +399,80 @@ class TransactionServiceTest {
 
         // Then
         assertTrue(holdings.isEmpty())
+    }
+
+    @Test
+    fun `should delete existing transaction`() {
+        // Given
+        `when`(transactionRepository.existsById(1L)).thenReturn(true)
+
+        // When
+        val result = transactionService.delete(1L)
+
+        // Then
+        assertTrue(result)
+        verify(transactionRepository).deleteById(1L)
+    }
+
+    @Test
+    fun `should return false when deleting non-existent transaction`() {
+        // Given
+        `when`(transactionRepository.existsById(999L)).thenReturn(false)
+
+        // When
+        val result = transactionService.delete(999L)
+
+        // Then
+        assertFalse(result)
+        verify(transactionRepository, never()).deleteById(999L)
+    }
+
+    @Test
+    fun `should delete all transactions by account id`() {
+        // Given
+        val transactions =
+            listOf(
+                Transaction(
+                    id = 1L,
+                    account = TEST_ACCOUNT,
+                    symbol = "AAPL",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.STOCK,
+                    quantity = BigDecimal("10"),
+                    price = BigDecimal("150.00"),
+                    totalAmount = BigDecimal("1500.00"),
+                ),
+                Transaction(
+                    id = 2L,
+                    account = TEST_ACCOUNT,
+                    symbol = "BTC",
+                    type = TransactionType.BUY,
+                    assetType = AssetType.CRYPTO,
+                    quantity = BigDecimal("0.5"),
+                    price = BigDecimal("50000.00"),
+                    totalAmount = BigDecimal("25000.00"),
+                ),
+            )
+        `when`(transactionRepository.findByAccountId(1L)).thenReturn(transactions)
+
+        // When
+        val result = transactionService.deleteAllByAccountId(1L)
+
+        // Then
+        assertEquals(2, result)
+        verify(transactionRepository).deleteAll(transactions)
+    }
+
+    @Test
+    fun `should return zero when deleting all transactions for account with none`() {
+        // Given
+        `when`(transactionRepository.findByAccountId(1L)).thenReturn(emptyList())
+
+        // When
+        val result = transactionService.deleteAllByAccountId(1L)
+
+        // Then
+        assertEquals(0, result)
+        verify(transactionRepository, never()).deleteAll(org.mockito.ArgumentMatchers.anyList())
     }
 }

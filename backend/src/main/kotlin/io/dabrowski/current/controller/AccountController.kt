@@ -2,9 +2,11 @@ package io.dabrowski.current.controller
 
 import io.dabrowski.current.entity.Account
 import io.dabrowski.current.service.AccountService
+import io.dabrowski.current.service.DeleteResult
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -66,14 +68,28 @@ class AccountController(
         }
     }
 
+    @PostMapping("/{id}/cash")
+    fun adjustCash(
+        @PathVariable id: Long,
+        @Valid @RequestBody request: AdjustCashRequest,
+    ): ResponseEntity<Account> {
+        val updatedAccount = accountService.adjustCash(id, request.amount)
+        return if (updatedAccount != null) {
+            ResponseEntity.ok(updatedAccount)
+        } else {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
     @DeleteMapping("/{id}")
     fun deleteAccount(
         @PathVariable id: Long,
     ): ResponseEntity<Void> =
-        if (accountService.delete(id)) {
-            ResponseEntity.noContent().build()
-        } else {
-            ResponseEntity.notFound().build()
+        when (accountService.delete(id)) {
+            DeleteResult.DELETED -> ResponseEntity.noContent().build()
+            DeleteResult.NOT_FOUND -> ResponseEntity.notFound().build()
+            DeleteResult.HAS_TRANSACTIONS ->
+                ResponseEntity.status(HttpStatus.CONFLICT).build()
         }
 }
 
@@ -87,4 +103,8 @@ data class CreateAccountRequest(
 data class UpdateCashRequest(
     @PositiveOrZero(message = "Cash balance must be zero or positive")
     val newBalance: BigDecimal,
+)
+
+data class AdjustCashRequest(
+    val amount: BigDecimal,
 )

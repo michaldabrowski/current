@@ -1,9 +1,12 @@
 package io.dabrowski.current.service
 
 import io.dabrowski.current.entity.Account
+import io.dabrowski.current.entity.Transaction
+import io.dabrowski.current.entity.TransactionType
 import io.dabrowski.current.repository.AccountRepository
+import io.dabrowski.current.repository.BalanceSnapshotRepository
+import io.dabrowski.current.repository.TransactionRepository
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -22,6 +25,12 @@ import java.util.Optional
 class AccountServiceTest {
     @Mock
     private lateinit var accountRepository: AccountRepository
+
+    @Mock
+    private lateinit var balanceSnapshotRepository: BalanceSnapshotRepository
+
+    @Mock
+    private lateinit var transactionRepository: TransactionRepository
 
     @InjectMocks
     private lateinit var accountService: AccountService
@@ -168,20 +177,22 @@ class AccountServiceTest {
     }
 
     @Test
-    fun `should delete existing account`() {
+    fun `should delete existing account without transactions`() {
         // Given
         `when`(accountRepository.existsById(1L)).thenReturn(true)
+        `when`(transactionRepository.findByAccountId(1L)).thenReturn(emptyList())
 
         // When
         val result = accountService.delete(1L)
 
         // Then
-        assertTrue(result)
+        assertEquals(DeleteResult.DELETED, result)
+        verify(balanceSnapshotRepository).deleteByAccountId(1L)
         verify(accountRepository).deleteById(1L)
     }
 
     @Test
-    fun `should return false when deleting non-existent account`() {
+    fun `should return NOT_FOUND when deleting non-existent account`() {
         // Given
         `when`(accountRepository.existsById(999L)).thenReturn(false)
 
@@ -189,7 +200,88 @@ class AccountServiceTest {
         val result = accountService.delete(999L)
 
         // Then
-        assertFalse(result)
+        assertEquals(DeleteResult.NOT_FOUND, result)
         verify(accountRepository, never()).deleteById(999L)
+    }
+
+    @Test
+    fun `should return HAS_TRANSACTIONS when account has transactions`() {
+        // Given
+        `when`(accountRepository.existsById(1L)).thenReturn(true)
+        val transaction =
+            Transaction(
+                id = 1L,
+                account = ACCOUNT_1,
+                symbol = "AAPL",
+                type = TransactionType.BUY,
+                assetType = io.dabrowski.current.entity.AssetType.STOCK,
+                quantity = BigDecimal("10"),
+                price = BigDecimal("150.00"),
+                totalAmount = BigDecimal("1500.00"),
+            )
+        `when`(transactionRepository.findByAccountId(1L)).thenReturn(listOf(transaction))
+
+        // When
+        val result = accountService.delete(1L)
+
+        // Then
+        assertEquals(DeleteResult.HAS_TRANSACTIONS, result)
+        verify(accountRepository, never()).deleteById(1L)
+        verify(balanceSnapshotRepository, never()).deleteByAccountId(1L)
+    }
+
+    @Test
+    fun `should adjust cash balance by positive amount`() {
+        // Given
+        `when`(accountRepository.findById(1L)).thenReturn(Optional.of(ACCOUNT_1))
+        `when`(accountRepository.save(org.mockito.ArgumentMatchers.any(Account::class.java)))
+            .thenAnswer { it.arguments[0] }
+
+        // When
+        val result = accountService.adjustCash(1L, BigDecimal("500.00"))
+
+        // Then
+        assertNotNull(result)
+        assertEquals(BigDecimal("1500.00"), result!!.cashBalance)
+    }
+
+    @Test
+    fun `should adjust cash balance by negative amount`() {
+        // Given
+        `when`(accountRepository.findById(1L)).thenReturn(Optional.of(ACCOUNT_1))
+        `when`(accountRepository.save(org.mockito.ArgumentMatchers.any(Account::class.java)))
+            .thenAnswer { it.arguments[0] }
+
+        // When
+        val result = accountService.adjustCash(1L, BigDecimal("-200.00"))
+
+        // Then
+        assertNotNull(result)
+        assertEquals(BigDecimal("800.00"), result!!.cashBalance)
+    }
+
+    @Test
+    fun `should return null when withdrawal would make balance negative`() {
+        // Given
+        `when`(accountRepository.findById(1L)).thenReturn(Optional.of(ACCOUNT_1))
+
+        // When
+        val result = accountService.adjustCash(1L, BigDecimal("-2000.00"))
+
+        // Then
+        assertNull(result)
+        verify(accountRepository, never()).save(org.mockito.ArgumentMatchers.any(Account::class.java))
+    }
+
+    @Test
+    fun `should return null when adjusting cash for non-existent account`() {
+        // Given
+        `when`(accountRepository.findById(999L)).thenReturn(Optional.empty())
+
+        // When
+        val result = accountService.adjustCash(999L, BigDecimal("100.00"))
+
+        // Then
+        assertNull(result)
     }
 }

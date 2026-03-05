@@ -2,6 +2,7 @@ package io.dabrowski.current.controller
 
 import io.dabrowski.current.entity.Account
 import io.dabrowski.current.service.AccountService
+import io.dabrowski.current.service.DeleteResult
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
@@ -12,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
@@ -165,5 +167,68 @@ class AccountControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"newBalance": -100.00}"""),
             ).andExpect(status().isBadRequest())
+    }
+
+    @Test
+    fun `should adjust cash balance successfully`() {
+        // Given
+        val updatedAccount = Account(1L, "Account 1", BigDecimal("1500.00"))
+        `when`(accountService.adjustCash(1L, BigDecimal("500.00"))).thenReturn(updatedAccount)
+
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/accounts/1/cash")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"amount": 500.00}"""),
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$.cashBalance").value(1500.00))
+    }
+
+    @Test
+    fun `should return 400 when cash adjustment would result in negative balance`() {
+        // Given
+        `when`(accountService.adjustCash(1L, BigDecimal("-5000.00"))).thenReturn(null)
+
+        // Expect
+        mockMvc
+            .perform(
+                post("/api/accounts/1/cash")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"amount": -5000.00}"""),
+            ).andExpect(status().isBadRequest())
+    }
+
+    @Test
+    fun `should delete account successfully`() {
+        // Given
+        `when`(accountService.delete(1L)).thenReturn(DeleteResult.DELETED)
+
+        // Expect
+        mockMvc
+            .perform(delete("/api/accounts/1"))
+            .andExpect(status().isNoContent())
+    }
+
+    @Test
+    fun `should return 404 when deleting non-existent account`() {
+        // Given
+        `when`(accountService.delete(NON_EXISTENT_ACCOUNT_ID)).thenReturn(DeleteResult.NOT_FOUND)
+
+        // Expect
+        mockMvc
+            .perform(delete("/api/accounts/$NON_EXISTENT_ACCOUNT_ID"))
+            .andExpect(status().isNotFound())
+    }
+
+    @Test
+    fun `should return 409 when deleting account with transactions`() {
+        // Given
+        `when`(accountService.delete(1L)).thenReturn(DeleteResult.HAS_TRANSACTIONS)
+
+        // Expect
+        mockMvc
+            .perform(delete("/api/accounts/1"))
+            .andExpect(status().isConflict())
     }
 }

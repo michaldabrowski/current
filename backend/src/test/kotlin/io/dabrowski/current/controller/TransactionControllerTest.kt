@@ -14,6 +14,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -298,5 +299,51 @@ class TransactionControllerTest {
                         """,
                     ),
             ).andExpect(status().isBadRequest())
+    }
+
+    @Test
+    fun `should delete transaction successfully`() {
+        // Given
+        `when`(transactionService.delete(1L)).thenReturn(true)
+
+        // Expect
+        mockMvc
+            .perform(delete("/api/transactions/1"))
+            .andExpect(status().isNoContent())
+    }
+
+    @Test
+    fun `should return 404 when deleting non-existent transaction`() {
+        // Given
+        `when`(transactionService.delete(999L)).thenReturn(false)
+
+        // Expect
+        mockMvc
+            .perform(delete("/api/transactions/999"))
+            .andExpect(status().isNotFound())
+    }
+
+    @Test
+    fun `should delete all transactions by account id`() {
+        // Given
+        `when`(transactionService.deleteAllByAccountId(1L)).thenReturn(3)
+
+        // Expect
+        mockMvc
+            .perform(delete("/api/transactions/account/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.deleted").value(3))
+    }
+
+    @Test
+    fun `should return zero when deleting all transactions for empty account`() {
+        // Given
+        `when`(transactionService.deleteAllByAccountId(999L)).thenReturn(0)
+
+        // Expect
+        mockMvc
+            .perform(delete("/api/transactions/account/999"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.deleted").value(0))
     }
 }
