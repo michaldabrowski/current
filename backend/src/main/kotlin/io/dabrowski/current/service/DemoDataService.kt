@@ -30,8 +30,9 @@ class DemoDataService(
         // Remove existing demo account if present
         val existing = accountRepository.findByName(DEMO_ACCOUNT_NAME)
         if (existing != null) {
-            balanceSnapshotRepository.deleteByAccountId(existing.id!!)
-            transactionRepository.deleteAll(transactionRepository.findByAccountId(existing.id))
+            val existingId = requireNotNull(existing.id)
+            balanceSnapshotRepository.deleteByAccountId(existingId)
+            transactionRepository.deleteAll(transactionRepository.findByAccountId(existingId))
             accountRepository.delete(existing)
         }
 
@@ -94,8 +95,9 @@ class DemoDataService(
     @Transactional
     fun reset(): Boolean {
         val account = accountRepository.findByName(DEMO_ACCOUNT_NAME) ?: return false
-        balanceSnapshotRepository.deleteByAccountId(account.id!!)
-        transactionRepository.deleteAll(transactionRepository.findByAccountId(account.id))
+        val accountId = requireNotNull(account.id)
+        balanceSnapshotRepository.deleteByAccountId(accountId)
+        transactionRepository.deleteAll(transactionRepository.findByAccountId(accountId))
         accountRepository.delete(account)
         return true
     }
